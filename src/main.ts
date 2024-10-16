@@ -104,25 +104,89 @@ zVals = create3DArray(countX, countY, countZ, 3)
 console.log("xvals: ", xVals.length, xVals[0].length);
 console.log("yVals: ", yVals.length, yVals[0].length);
 
-const createVertices = (xArr: number[][], yArr: number[][]) => {
+// const createVertices = (xArr: number[][][], yArr: number[][][] ) => {
+//   const vertices = [];
+//   for (let j = 0; j < yArr.length - 1; j++) {
+//     for (let i = 0; i < xArr[0].length - 1; i++) {
+//       vertices.push(xArr[j][i][0], yArr[j][i][0], 0);
+//       vertices.push(xArr[j][i + 1][0], yArr[j][i + 1][0], 0);
+//       vertices.push(xArr[j + 1][i][0], yArr[j + 1][i][0], 0); //Triangle 1
+
+
+//       vertices.push(xArr[j + 1][i + 1][0], yArr[j + 1][i + 1][0], 0);
+//       vertices.push(xArr[j + 1][i][0], yArr[j + 1][i][0], 0);
+//       vertices.push(xArr[j][i + 1][0], yArr[j][i + 1][0], 0); // T2
+//       // Just 10 more to go ...*dies*
+
+
+//     }
+//   }
+//   return new Float32Array(vertices);
+// };
+
+
+
+// Chatgpt coming in clutch. Conceptually shit is clear, so this is allowed :)
+const createVertices = (xArr: number[][][], yArr: number[][][], zArr: number[][][]) => {
   const vertices = [];
+  
   for (let j = 0; j < yArr.length - 1; j++) {
     for (let i = 0; i < xArr[0].length - 1; i++) {
-      vertices.push(xArr[j][i], yArr[j][i], 0);
-      vertices.push(xArr[j][i + 1], yArr[j][i + 1], 0);
-      vertices.push(xArr[j + 1][i], yArr[j + 1][i], 0);
-      vertices.push(xArr[j + 1][i + 1], yArr[j + 1][i + 1], 0);
-      vertices.push(xArr[j + 1][i], yArr[j + 1][i], 0);
-      vertices.push(xArr[j][i + 1], yArr[j][i + 1], 0);
+      for (let k = 0; k < zArr[0][0].length - 1; k++) {
+
+        // Coordinates of the cube corners
+        const x0 = xArr[j][i][k], y0 = yArr[j][i][k], z0 = zArr[j][i][k];
+        const x1 = xArr[j + 1][i][k], y1 = yArr[j + 1][i][k], z1 = zArr[j + 1][i][k];
+        const x2 = xArr[j][i + 1][k], y2 = yArr[j][i + 1][k], z2 = zArr[j][i + 1][k];
+        const x3 = xArr[j + 1][i + 1][k], y3 = yArr[j + 1][i + 1][k], z3 = zArr[j + 1][i + 1][k];
+
+        // 8 vertices for the cube corners (front and back)
+        const frontBottomLeft = [x0, y0, z0];
+        const frontBottomRight = [x2, y2, z0];
+        const frontTopLeft = [x1, y1, z0];
+        const frontTopRight = [x3, y3, z0];
+        const backBottomLeft = [x0, y0, zArr[j][i][k+1]];
+        const backBottomRight = [x2, y2, zArr[j][i][k+1]];
+        const backTopLeft = [x1, y1, zArr[j+1][i][k+1]];
+        const backTopRight = [x3, y3, zArr[j+1][i+1][k+1]];
+
+        // Front face
+        vertices.push(...frontBottomLeft, ...frontBottomRight, ...frontTopLeft);  // Triangle 1
+        vertices.push(...frontTopRight, ...frontTopLeft, ...frontBottomRight);    // Triangle 2
+
+        // Back face
+        vertices.push(...backBottomLeft, ...backTopLeft, ...backBottomRight);    // Triangle 1
+        vertices.push(...backTopRight, ...backBottomRight, ...backTopLeft);      // Triangle 2
+
+        // Left face
+        vertices.push(...backBottomLeft, ...frontBottomLeft, ...backTopLeft);    // Triangle 1
+        vertices.push(...frontTopLeft, ...backTopLeft, ...frontBottomLeft);      // Triangle 2
+
+        // Right face
+        vertices.push(...frontBottomRight, ...backBottomRight, ...frontTopRight);  // Triangle 1
+        vertices.push(...backTopRight, ...frontTopRight, ...backBottomRight);      // Triangle 2
+
+        // Top face
+        vertices.push(...frontTopLeft, ...frontTopRight, ...backTopLeft);          // Triangle 1
+        vertices.push(...backTopRight, ...backTopLeft, ...frontTopRight);          // Triangle 2
+
+        // Bottom face
+        vertices.push(...frontBottomLeft, ...backBottomLeft, ...frontBottomRight); // Triangle 1
+        vertices.push(...backBottomRight, ...frontBottomRight, ...backBottomLeft); // Triangle 2
+      }
     }
   }
+  
   return new Float32Array(vertices);
 };
+
+
+
 const createColourVertices = (colourVals: number[][][]) => {
   const vertices = [];
   for (let j = 0; j < colourVals.length; j++) {
     for (let i = 0; i < colourVals[0].length; i++) {
-      for (let k = 0; k < 6; k++) {
+      for (let k = 0; k < 36; k++) {
         vertices.push(
           colourVals[i][j][0],
           colourVals[i][j][1],
