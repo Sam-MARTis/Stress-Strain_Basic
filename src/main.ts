@@ -25,7 +25,7 @@ const camera = new THREE.PerspectiveCamera(fov, AR, near, far);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
-const COLOUR_STRENGTH = 1;
+const COLOUR_STRENGTH = 0.01;
 
 const maxx = 5;
 const maxy = 5;
@@ -202,8 +202,8 @@ const createColourVertices = (colourVals: number[][][][]) => {
   for (let j = 0; j < colourVals.length; j++) {
     for (let i = 0; i < colourVals[0].length; i++) {
       for (let k = 0; k < colourVals[0][0].length; k++) {
+        //Six faces and each face has two Triangles. Each triangle has three points which each need three frickin colours
         for (let m = 0; m < 36; m++) {
-          //Six faces and each face has two Triangles. Each triangle has three points which each need three frickin colours
           vertices.push(
             colourVals[j][i][k][0],
             colourVals[j][i][k][1],
@@ -256,9 +256,12 @@ const displaceStuff = (
         x1[j][i][k] += ds.x;
         y1[j][i][k] += ds.y;
         z1[j][i][k] += ds.z;
-        colours[j][i][k][0] = ds.x * COLOUR_STRENGTH;
-        colours[j][i][k][1] = ds.y * COLOUR_STRENGTH;
-        colours[j][i][k][2] = ds.z * COLOUR_STRENGTH;
+
+        const dispSquared = ds.x**2 + ds.y**2 + ds.z**2
+        const valueToPlot = Math.E**(-COLOUR_STRENGTH*dispSquared)
+        colours[j][i][k][0] = 1-valueToPlot;
+        colours[j][i][k][1] = 0;
+        colours[j][i][k][2] = valueToPlot;
       }
     }
   }
@@ -282,8 +285,8 @@ geometry.setAttribute("color", new THREE.BufferAttribute(c2, 3));
 // geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 const material = new THREE.MeshStandardMaterial({
-  // vertexColors: true,
-  color: "white",
+  vertexColors: true,
+  // color: "white",
   wireframe: false,
   side: THREE.DoubleSide,
 });
