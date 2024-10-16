@@ -36,7 +36,7 @@ const step = 0.1;
 const countX = Math.floor(maxx / step);
 const countY = Math.floor(maxy / step);
 const countZ = Math.floor(maxz / step);
-const size = 0.1;
+// const size = 0.1;
 
 const light = new THREE.AmbientLight("#ffffff", 1);
 
