@@ -25,7 +25,8 @@ const camera = new THREE.PerspectiveCamera(fov, AR, near, far);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
-const COLOUR_STRENGTH = 2;
+const COLOUR_STRENGTH = 0.05;
+const COLOUR_SCALE = 20;
 
 const maxx = 2;
 const maxy = 2;
@@ -41,47 +42,55 @@ const light = new THREE.AmbientLight("#ffffff", 1);
 
 const geometry = new THREE.BufferGeometry();
 
-const vertices = new Float32Array([
-  -1, -1, 0, 3, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, 1, 0,
-]);
-const colours = new Float32Array([
-  0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-]);
+// const vertices = new Float32Array([
+//   -1, -1, 0, 3, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, 1, 0,
+// ]);
+// const colours = new Float32Array([
+//   0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+// ]);
+
+const displacementFunction = (x: number, y: number, z: number): Vector => {
+  const multiplier = 0.2;
+  const dx = y*z ;
+  const dy = (z * z * z) / 2;
+  const dz = x / 2;
+  return { x: dx * multiplier, y: dy * multiplier, z: dz * multiplier };
+};
 
 let xVals: number[][][] = [];
 let yVals: number[][][] = [];
 let zVals: number[][][] = [];
 let colourVals: number[][][][] = [];
 
+const planeMat = new THREE.MeshStandardMaterial({
+  color: "white",
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.1,
+});
 
-const planeMat = new THREE.MeshStandardMaterial( {color: "white", side: THREE.DoubleSide,transparent: true,  opacity: 0.1} ); 
+const planeXY = new THREE.PlaneGeometry(3, 3);
 
-const planeXY = new THREE.PlaneGeometry( 3, 3 );
+const planeXYMesh = new THREE.Mesh(planeXY, planeMat);
+planeXYMesh.translateY(1.5);
+planeXYMesh.translateX(1.5);
+scene.add(planeXYMesh);
 
-const planeXYMesh = new THREE.Mesh( planeXY, planeMat );
-planeXYMesh.translateY(1.5)
-planeXYMesh.translateX(1.5)
- scene.add( planeXYMesh );
+const planeYZ = new THREE.PlaneGeometry(3, 3);
 
- const planeYZ = new THREE.PlaneGeometry( 3, 3 );
+const planeYZMesh = new THREE.Mesh(planeYZ, planeMat);
+planeYZMesh.translateX(1.5);
+planeYZMesh.translateZ(1.5);
+planeYZMesh.rotateX(Math.PI / 2);
+scene.add(planeYZMesh);
 
-const planeYZMesh = new THREE.Mesh( planeYZ, planeMat );
-planeYZMesh.translateX(1.5)
-planeYZMesh.translateZ(1.5)
-planeYZMesh.rotateX(Math.PI/2)
- scene.add( planeYZMesh );
+const planeXZ = new THREE.PlaneGeometry(3, 3);
 
- const planeXZ = new THREE.PlaneGeometry( 3, 3 );
-
-const planeXZMesh = new THREE.Mesh( planeXZ, planeMat );
-planeXZMesh.translateY(1.5)
-planeXZMesh.translateZ(1.5)
-planeXZMesh.rotateY(Math.PI/2)
- scene.add( planeXZMesh );
-
-
-
-
+const planeXZMesh = new THREE.Mesh(planeXZ, planeMat);
+planeXZMesh.translateY(1.5);
+planeXZMesh.translateZ(1.5);
+planeXZMesh.rotateY(Math.PI / 2);
+scene.add(planeXZMesh);
 
 const create3DArray = (
   a: number,
@@ -188,14 +197,29 @@ const createVertices = (
 
         // cyxz
         const c000 = [xArr[j][i][k], yArr[j][i][k], zArr[j][i][k]];
-const c001 = [xArr[j][i][k + 1], yArr[j][i][k + 1], zArr[j][i][k + 1]];
-const c010 = [xArr[j][i + 1][k], yArr[j][i + 1][k], zArr[j][i + 1][k]];
-const c011 = [xArr[j][i + 1][k + 1], yArr[j][i + 1][k + 1], zArr[j][i + 1][k + 1]];
-const c100 = [xArr[j + 1][i][k], yArr[j + 1][i][k], zArr[j + 1][i][k]];
-const c101 = [xArr[j + 1][i][k + 1], yArr[j + 1][i][k + 1], zArr[j + 1][i][k + 1]];
-const c110 = [xArr[j + 1][i + 1][k], yArr[j + 1][i + 1][k], zArr[j + 1][i + 1][k]];
-const c111 = [xArr[j + 1][i + 1][k + 1], yArr[j + 1][i + 1][k + 1], zArr[j + 1][i + 1][k + 1]];
-
+        const c001 = [xArr[j][i][k + 1], yArr[j][i][k + 1], zArr[j][i][k + 1]];
+        const c010 = [xArr[j][i + 1][k], yArr[j][i + 1][k], zArr[j][i + 1][k]];
+        const c011 = [
+          xArr[j][i + 1][k + 1],
+          yArr[j][i + 1][k + 1],
+          zArr[j][i + 1][k + 1],
+        ];
+        const c100 = [xArr[j + 1][i][k], yArr[j + 1][i][k], zArr[j + 1][i][k]];
+        const c101 = [
+          xArr[j + 1][i][k + 1],
+          yArr[j + 1][i][k + 1],
+          zArr[j + 1][i][k + 1],
+        ];
+        const c110 = [
+          xArr[j + 1][i + 1][k],
+          yArr[j + 1][i + 1][k],
+          zArr[j + 1][i + 1][k],
+        ];
+        const c111 = [
+          xArr[j + 1][i + 1][k + 1],
+          yArr[j + 1][i + 1][k + 1],
+          zArr[j + 1][i + 1][k + 1],
+        ];
 
         // Front face
         vertices.push(...c000, ...c100, ...c010); // Triangle 1
@@ -227,19 +251,54 @@ const c111 = [xArr[j + 1][i + 1][k + 1], yArr[j + 1][i + 1][k + 1], zArr[j + 1][
   return new Float32Array(vertices);
 };
 
-const createColourVertices = (colourVals: number[][][][]) => {
+const createColourVertices = (colourValues: number[][][][]) => {
   const vertices = [];
-  for (let j = 0; j < colourVals.length; j++) {
-    for (let i = 0; i < colourVals[0].length; i++) {
-      for (let k = 0; k < colourVals[0][0].length; k++) {
+
+  for (let j = 0; j < colourValues.length-1; j++) {
+    for (let i = 0; i < colourValues[0].length-1; i++) {
+      for (let k = 0; k < colourValues[0][0].length-1; k++) {
         //Six faces and each face has two Triangles. Each triangle has three points which each need three frickin colours
-        for (let m = 0; m < 36; m++) {
-          vertices.push(
-            colourVals[j][i][k][0],
-            colourVals[j][i][k][1],
-            colourVals[j][i][k][2]
-          );
-        }
+        const coloursToPush = [
+          colourValues[j+0][i+0][k+0][0], colourValues[j+0][i+0][k+0][1], colourValues[j+0][i+0][k+0][2],
+          colourValues[j+1][i+0][k+0][0], colourValues[j+1][i+0][k+0][1], colourValues[j+1][i+0][k+0][2],
+          colourValues[j+0][i+1][k+0][0], colourValues[j+0][i+1][k+0][1], colourValues[j+0][i+1][k+0][2],
+          colourValues[j+1][i+1][k+0][0], colourValues[j+1][i+1][k+0][1], colourValues[j+1][i+1][k+0][2],
+          colourValues[j+1][i+0][k+0][0], colourValues[j+1][i+0][k+0][1], colourValues[j+1][i+0][k+0][2],
+          colourValues[j+0][i+1][k+0][0], colourValues[j+0][i+1][k+0][1], colourValues[j+0][i+1][k+0][2],
+          colourValues[j+1][i+0][k+0][0], colourValues[j+1][i+0][k+0][1], colourValues[j+1][i+0][k+0][2],
+          colourValues[j+1][i+0][k+1][0], colourValues[j+1][i+0][k+1][1], colourValues[j+1][i+0][k+1][2],
+          colourValues[j+1][i+1][k+0][0], colourValues[j+1][i+1][k+0][1], colourValues[j+1][i+1][k+0][2],
+          colourValues[j+1][i+1][k+1][0], colourValues[j+1][i+1][k+1][1], colourValues[j+1][i+1][k+1][2],
+          colourValues[j+1][i+0][k+1][0], colourValues[j+1][i+0][k+1][1], colourValues[j+1][i+0][k+1][2],
+          colourValues[j+1][i+1][k+0][0], colourValues[j+1][i+1][k+0][1], colourValues[j+1][i+1][k+0][2],
+          colourValues[j+1][i+0][k+1][0], colourValues[j+1][i+0][k+1][1], colourValues[j+1][i+0][k+1][2],
+          colourValues[j+0][i+0][k+1][0], colourValues[j+0][i+0][k+1][1], colourValues[j+0][i+0][k+1][2],
+          colourValues[j+1][i+1][k+1][0], colourValues[j+1][i+1][k+1][1], colourValues[j+1][i+1][k+1][2],
+          colourValues[j+0][i+1][k+1][0], colourValues[j+0][i+1][k+1][1], colourValues[j+0][i+1][k+1][2],
+          colourValues[j+1][i+1][k+1][0], colourValues[j+1][i+1][k+1][1], colourValues[j+1][i+1][k+1][2],
+          colourValues[j+0][i+0][k+1][0], colourValues[j+0][i+0][k+1][1], colourValues[j+0][i+0][k+1][2],
+          colourValues[j+0][i+0][k+1][0], colourValues[j+0][i+0][k+1][1], colourValues[j+0][i+0][k+1][2],
+          colourValues[j+0][i+0][k+0][0], colourValues[j+0][i+0][k+0][1], colourValues[j+0][i+0][k+0][2],
+          colourValues[j+0][i+1][k+1][0], colourValues[j+0][i+1][k+1][1], colourValues[j+0][i+1][k+1][2],
+          colourValues[j+0][i+1][k+0][0], colourValues[j+0][i+1][k+0][1], colourValues[j+0][i+1][k+0][2],
+          colourValues[j+0][i+1][k+1][0], colourValues[j+0][i+1][k+1][1], colourValues[j+0][i+1][k+1][2],
+          colourValues[j+0][i+0][k+0][0], colourValues[j+0][i+0][k+0][1], colourValues[j+0][i+0][k+0][2],
+          colourValues[j+0][i+1][k+0][0], colourValues[j+0][i+1][k+0][1], colourValues[j+0][i+1][k+0][2],
+          colourValues[j+1][i+1][k+0][0], colourValues[j+1][i+1][k+0][1], colourValues[j+1][i+1][k+0][2],
+          colourValues[j+0][i+1][k+1][0], colourValues[j+0][i+1][k+1][1], colourValues[j+0][i+1][k+1][2],
+          colourValues[j+1][i+1][k+1][0], colourValues[j+1][i+1][k+1][1], colourValues[j+1][i+1][k+1][2],
+          colourValues[j+0][i+1][k+1][0], colourValues[j+0][i+1][k+1][1], colourValues[j+0][i+1][k+1][2],
+          colourValues[j+1][i+1][k+0][0], colourValues[j+1][i+1][k+0][1], colourValues[j+1][i+1][k+0][2],
+          colourValues[j+0][i+0][k+1][0], colourValues[j+0][i+0][k+1][1], colourValues[j+0][i+0][k+1][2],
+          colourValues[j+1][i+0][k+1][0], colourValues[j+1][i+0][k+1][1], colourValues[j+1][i+0][k+1][2],
+          colourValues[j+0][i+0][k+0][0], colourValues[j+0][i+0][k+0][1], colourValues[j+0][i+0][k+0][2],
+          colourValues[j+1][i+0][k+0][0], colourValues[j+1][i+0][k+0][1], colourValues[j+1][i+0][k+0][2],
+          colourValues[j+0][i+0][k+0][0], colourValues[j+0][i+0][k+0][1], colourValues[j+0][i+0][k+0][2],
+          colourValues[j+1][i+0][k+1][0], colourValues[j+1][i+0][k+1][1], colourValues[j+1][i+0][k+1][2],
+        ];
+        // for(let q=0; q<36; q++){
+        vertices.push(...coloursToPush);
+        // }
       }
     }
   }
@@ -252,13 +311,7 @@ type Vector = {
   z: number;
 };
 
-const displacementFunction = (x: number, y: number, z: number): Vector => {
-  const multiplier = 0.2;
-  const dx = y/2;
-  const dy = z*z*z/2;
-  const dz = x/2;
-  return { x: dx * multiplier, y: dy * multiplier, z: dz * multiplier };
-};
+
 
 type Positions = {
   xVals: number[][][];
@@ -287,11 +340,11 @@ const displaceStuff = (
         y1[j][i][k] += ds.y;
         z1[j][i][k] += ds.z;
 
-        const dispSquared = ds.x**2 + ds.y**2 + ds.z**2
-        const valueToPlot = Math.E**(-COLOUR_STRENGTH*dispSquared)
-        colours[j][i][k][0] = 1-valueToPlot;
-        colours[j][i][k][1] = 0;
-        colours[j][i][k][2] = valueToPlot;
+        // const dispSquared = ds.x**2 + ds.y**2 + ds.z**2
+        // const valueToPlot = Math.E**(-COLOUR_STRENGTH*dispSquared)
+        // colours[j][i][k][0] = 1-valueToPlot;
+        // colours[j][i][k][1] = 0;
+        // colours[j][i][k][2] = valueToPlot;
       }
     }
   }
@@ -299,11 +352,49 @@ const displaceStuff = (
   return { xVals: x1, yVals: y1, zVals: z1, colours: colours };
 };
 
+const findColourMapping = (
+  xOld: number[][][],
+  yOld: number[][][],
+  zOld: number[][][],
+  xNew: number[][][],
+  yNew: number[][][],
+  zNew: number[][][]
+): number[][][][] => {
+  const colours = create4DArray(
+    xOld.length,
+    yOld[0].length,
+    zOld[0][0].length,
+    3
+  );
+  for (let j = 0; j < yOld.length; j++) {
+    for (let i = 0; i < xOld[0].length; i++) {
+      for (let k = 0; k < zOld[0][0].length; k++) {
+        const val =
+          COLOUR_SCALE *
+          ((zNew[j][i][k] - zOld[j][i][k]) ** 2 +
+            (yNew[j][i][k] - yOld[j][i][k]) ** 2 +
+            (xNew[j][i][k] - xOld[j][i][k]) ** 2);
+        const normVal = Math.E ** (-COLOUR_STRENGTH * val ** 2);
+        // colours[j][i][k][0] = Math.max(2 - 2 * normVal, 1);
+        colours[j][i][k][0] = 1 - 1 * normVal;
+        // colours[j][i][k][1] = Math.min(1 - 2 * normVal, 0);
+        colours[j][i][k][1] = 0;
+        colours[j][i][k][2] = (normVal);
+        // colours[j][i][k][0] = 1;
+        // colours[j][i][k][1] = 1;
+        // colours[j][i][k][2] = 1;
+      }
+    }
+  }
+  return colours;
+};
+
 const newPos = displaceStuff(xVals, yVals, zVals);
 const xNew = newPos.xVals;
 const yNew = newPos.yVals;
 const zNew = newPos.zVals;
 colourVals = newPos.colours;
+colourVals = findColourMapping(xVals, yVals, zVals, xNew, yNew, zNew);
 
 const v2 = createVertices(xNew, yNew, zNew);
 // const v2 = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0])
@@ -315,8 +406,8 @@ geometry.setAttribute("color", new THREE.BufferAttribute(c2, 3));
 // geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 const material = new THREE.MeshStandardMaterial({
-  // vertexColors: true,
-  color: "blue",
+  vertexColors: true,
+  // color: "blue",
   // wireframe: false,
   side: THREE.DoubleSide,
 });
