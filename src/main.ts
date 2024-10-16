@@ -52,8 +52,8 @@ const geometry = new THREE.BufferGeometry();
 const displacementFunction = (x: number, y: number, z: number): Vector => {
   const multiplier = 0.2;
   const dx = y*z ;
-  const dy = (z * z * z) / 2;
-  const dz = x / 2;
+  const dy = -(z * z * z*x) / 2;
+  const dz = -x*y / 2;
   return { x: dx * multiplier, y: dy * multiplier, z: dz * multiplier };
 };
 
