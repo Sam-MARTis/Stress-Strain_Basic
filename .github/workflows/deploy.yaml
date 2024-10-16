@@ -1,0 +1,45 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['18.x', '20.x']
+    steps:
+      - name: Checkout your repository using git
+        uses: actions/checkout@v3
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - run: npm ci
+      
+      - run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Checkout your repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+        
+      - name: Output the deployment URL
+        run: echo "Deployment URL: ${{ steps.deployment.outputs.page_url }}"
