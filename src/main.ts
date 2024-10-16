@@ -25,14 +25,16 @@ const camera = new THREE.PerspectiveCamera(fov, AR, near, far);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
+const COLOUR_STRENGTH = 1;
+
 const maxx = 5;
 const maxy = 5;
 const maxz = 5;
 const step = 0.1;
 
 const countX = Math.floor(maxx / step);
-const countY = Math.floor(maxx / step);
-const countZ = Math.floor(maxx / step);
+const countY = Math.floor(maxy / step);
+const countZ = Math.floor(maxz / step);
 const size = 0.1;
 
 const light = new THREE.AmbientLight("#ffffff", 1);
@@ -49,7 +51,7 @@ const colours = new Float32Array([
 let xVals: number[][][] = [];
 let yVals: number[][][] = [];
 let zVals: number[][][] = [];
-const colourVals: number[][][][] = [];
+let colourVals: number[][][][] = [];
 
 const create3DArray = (
   a: number,
@@ -80,6 +82,29 @@ const create3DArray = (
     }
   }
 
+  return array;
+};
+
+const create4DArray = (
+  a: number,
+  b: number,
+  c: number,
+  d: number
+): number[][][][] => {
+  //Order of acces is y x z
+  const array: number[][][][] = [];
+  for (let j = 0; j < b; j++) {
+    array.push([]);
+    for (let i = 0; i < a; i++) {
+      array[j].push([]);
+      for (let k = 0; k < c; k++) {
+        array[j][i].push([]);
+        for (let m = 0; m < d; m++) {
+          array[j][i][k].push(0);
+        }
+      }
+    }
+  }
   return array;
 };
 
@@ -123,7 +148,7 @@ const createVertices = (
   xArr: number[][][],
   yArr: number[][][],
   zArr: number[][][]
-) => {
+): Float32Array => {
   const vertices = [];
 
   for (let j = 0; j < yArr.length - 1; j++) {
@@ -132,31 +157,14 @@ const createVertices = (
         // Coordinates of the cube corners
 
         // cyxz
-        const c000 = [xArr[j][i][k], xArr[j][i][k], xArr[j][i][k]];
-        const c001 = [xArr[j][i][k + 1], xArr[j][i][k + 1], xArr[j][i][k + 1]];
-        const c010 = [xArr[j][i + 1][k], xArr[j][i + 1][k], xArr[j][i + 1][k]];
-        const c011 = [
-          xArr[j][i + 1][k + 1],
-          xArr[j][i + 1][k + 1],
-          xArr[j][i + 1][k + 1],
-        ];
-        const c100 = [xArr[j + 1][i][k], xArr[j + 1][i][k], xArr[j + 1][i][k]];
-        const c101 = [
-          xArr[j + 1][i][k + 1],
-          xArr[j + 1][i][k + 1],
-          xArr[j + 1][i][k + 1],
-        ];
-        const c110 = [
-          xArr[j + 1][i + 1][k],
-          xArr[j + 1][i + 1][k],
-          xArr[j + 1][i + 1][k],
-        ];
-        const c111 = [
-          xArr[j + 1][i + 1][k + 1],
-          xArr[j + 1][i + 1][k + 1],
-          xArr[j + 1][i + 1][k + 1],
-        ];
-
+        const c000 = [xArr[j][i][k], yArr[j][i][k], zArr[j][i][k]];
+const c001 = [xArr[j][i][k + 1], yArr[j][i][k + 1], zArr[j][i][k + 1]];
+const c010 = [xArr[j][i + 1][k], yArr[j][i + 1][k], zArr[j][i + 1][k]];
+const c011 = [xArr[j][i + 1][k + 1], yArr[j][i + 1][k + 1], zArr[j][i + 1][k + 1]];
+const c100 = [xArr[j + 1][i][k], yArr[j + 1][i][k], zArr[j + 1][i][k]];
+const c101 = [xArr[j + 1][i][k + 1], yArr[j + 1][i][k + 1], zArr[j + 1][i][k + 1]];
+const c110 = [xArr[j + 1][i + 1][k], yArr[j + 1][i + 1][k], zArr[j + 1][i + 1][k]];
+const c111 = [xArr[j + 1][i + 1][k + 1], yArr[j + 1][i + 1][k + 1], zArr[j + 1][i + 1][k + 1]];
 
 
         // Front face
@@ -189,16 +197,19 @@ const createVertices = (
   return new Float32Array(vertices);
 };
 
-const createColourVertices = (colourVals: number[][][]) => {
+const createColourVertices = (colourVals: number[][][][]) => {
   const vertices = [];
   for (let j = 0; j < colourVals.length; j++) {
     for (let i = 0; i < colourVals[0].length; i++) {
-      for (let k = 0; k < 36; k++) {
-        vertices.push(
-          colourVals[i][j][0],
-          colourVals[i][j][1],
-          colourVals[i][j][2]
-        );
+      for (let k = 0; k < colourVals[0][0].length; k++) {
+        for (let m = 0; m < 36; m++) {
+          //Six faces and each face has two Triangles. Each triangle has three points which each need three frickin colours
+          vertices.push(
+            colourVals[j][i][k][0],
+            colourVals[j][i][k][1],
+            colourVals[j][i][k][2]
+          );
+        }
       }
     }
   }
@@ -215,7 +226,7 @@ const displacementFunction = (x: number, y: number, z: number): Vector => {
   const multiplier = 1;
   const dx = (y * y) / 4;
   const dy = -z / 10;
-  const dz = 0;
+  const dz = x/1;
   return { x: dx * multiplier, y: dy * multiplier, z: dz * multiplier };
 };
 
@@ -223,6 +234,7 @@ type Positions = {
   xVals: number[][][];
   yVals: number[][][];
   zVals: number[][][];
+  colours: number[][][][];
 };
 
 const displaceStuff = (
@@ -231,9 +243,11 @@ const displaceStuff = (
   zVals: number[][][]
 ): Positions => {
   // arr.map(subArr2D => subArr2D.map(subArr1D => [...subArr1D]));
+
   const x1 = xVals.map((subArr2D) => subArr2D.map((subArr1D) => [...subArr1D]));
   const y1 = yVals.map((subArr2D) => subArr2D.map((subArr1D) => [...subArr1D]));
   const z1 = zVals.map((subArr2D) => subArr2D.map((subArr1D) => [...subArr1D]));
+  const colours = create4DArray(y1.length, x1[0].length, z1[0][0].length, 3);
 
   for (let j = 0; j < y1.length; j++) {
     for (let i = 0; i < x1[0].length; i++) {
@@ -242,18 +256,23 @@ const displaceStuff = (
         x1[j][i][k] += ds.x;
         y1[j][i][k] += ds.y;
         z1[j][i][k] += ds.z;
+        colours[j][i][k][0] = ds.x * COLOUR_STRENGTH;
+        colours[j][i][k][1] = ds.y * COLOUR_STRENGTH;
+        colours[j][i][k][2] = ds.z * COLOUR_STRENGTH;
       }
     }
   }
 
-  return { xVals: x1, yVals: y1, zVals: z1 };
+  return { xVals: x1, yVals: y1, zVals: z1, colours: colours };
 };
 
-const newPos = displaceStuff(xVals, yVals);
+const newPos = displaceStuff(xVals, yVals, zVals);
 const xNew = newPos.xVals;
 const yNew = newPos.yVals;
+const zNew = newPos.zVals;
+colourVals = newPos.colours;
 
-const v2 = createVertices(xNew, yNew);
+const v2 = createVertices(xNew, yNew, zNew);
 // const v2 = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0])
 console.log(v2);
 const c2 = createColourVertices(colourVals);
@@ -263,8 +282,8 @@ geometry.setAttribute("color", new THREE.BufferAttribute(c2, 3));
 // geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 const material = new THREE.MeshStandardMaterial({
-  vertexColors: true,
-  // color: "white",
+  // vertexColors: true,
+  color: "white",
   wireframe: false,
   side: THREE.DoubleSide,
 });
@@ -273,7 +292,8 @@ const obj = new THREE.Mesh(geometry, material);
 
 scene.add(obj);
 
-camera.position.z = 2;
+camera.position.z = 10;
+camera.position.x = 5;
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
