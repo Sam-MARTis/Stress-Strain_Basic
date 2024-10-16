@@ -5,6 +5,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const makeRender = (t = 0) => {
   // obj.rotation.y = 0.001*t
+  console.log(t)
+
 
   renderer.render(scene, camera);
   controls.update();
@@ -26,7 +28,10 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
 const maxx = 5;
 const maxy = 5;
-const step = 1;
+const step = 0.1;
+
+const countX = maxx/step
+const countY = maxx/step
 const size = 0.1;
 
 const light = new THREE.AmbientLight("#ffffff", 1);
@@ -44,15 +49,15 @@ const xVals: number[][] = [];
 const yVals: number[][] = [];
 const colourVals: number[][][] = [];
 
-for (let j = 0; j < maxy; j++) {
+for (let j = 0; j < countX; j++) {
   xVals.push([]);
   yVals.push([]);
   colourVals.push([]);
 
-  for (let i = 0; i < maxx; i++) {
-    xVals[j].push(i);
-    yVals[j].push(j);
-    colourVals[j].push([1, 0, i / maxx]);
+  for (let i = 0; i < countY; i++) {
+    yVals[j].push(j*step);
+    xVals[j].push(i*step);
+    colourVals[j].push([1, 0, i / countX]);
   }
 }
 console.log("xvals: ", xVals.length, xVals[0].length);
@@ -88,7 +93,47 @@ const createColourVertices = (colourVals: number[][][]) => {
   return new Float32Array(vertices);
 };
 
-const v2 = createVertices(xVals, yVals);
+
+
+type Vector = {
+  x: number;
+  y: number;
+  z: number;
+};
+
+const displacementFunction = (x: number, y:number, z: number): Vector => {
+  const multiplier = 1
+  const dx = y*y/4;
+  const dy = 0
+  const dz = 0
+  return {x: dx*multiplier, y: dy*multiplier, z: dz*multiplier}
+
+};
+
+type Positions = {
+  xVals: number[][];
+  yVals: number[][];
+};
+
+const displaceStuff = (xVals: number[][], yVals: number[][]): Positions => {
+  const x1 = xVals.map((innerArray) => [...innerArray]);
+  const y1 = yVals.map((innerArray) => [...innerArray]);
+  for(let j=0; j<y1.length; j++){
+    for(let i = 0; i< x1[0].length; i++){
+      const ds = displacementFunction(x1[j][i], y1[j][i], 0)
+      x1[j][i] += ds.x
+      y1[j][i] += ds.y
+    }
+  }
+
+  return {xVals: x1, yVals: y1 };
+};
+
+const newPos = displaceStuff(xVals, yVals)
+const xNew = newPos.xVals
+const yNew = newPos.yVals
+
+const v2 = createVertices(xNew, yNew);
 // const v2 = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0])
 console.log(v2);
 const c2 = createColourVertices(colourVals);
@@ -97,10 +142,12 @@ geometry.setAttribute("position", new THREE.BufferAttribute(v2, 3));
 geometry.setAttribute("color", new THREE.BufferAttribute(c2, 3));
 // geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
+
 const material = new THREE.MeshStandardMaterial({
   vertexColors: true,
   // color: "white",
   wireframe: false,
+  side: THREE.DoubleSide
 });
 
 const obj = new THREE.Mesh(geometry, material);
