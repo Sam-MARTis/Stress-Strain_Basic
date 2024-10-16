@@ -25,11 +25,11 @@ const camera = new THREE.PerspectiveCamera(fov, AR, near, far);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
-const COLOUR_STRENGTH = 0.01;
+const COLOUR_STRENGTH = 2;
 
-const maxx = 5;
-const maxy = 5;
-const maxz = 5;
+const maxx = 2;
+const maxy = 2;
+const maxz = 2;
 const step = 0.1;
 
 const countX = Math.floor(maxx / step);
@@ -52,6 +52,36 @@ let xVals: number[][][] = [];
 let yVals: number[][][] = [];
 let zVals: number[][][] = [];
 let colourVals: number[][][][] = [];
+
+
+const planeMat = new THREE.MeshStandardMaterial( {color: "white", side: THREE.DoubleSide,transparent: true,  opacity: 0.1} ); 
+
+const planeXY = new THREE.PlaneGeometry( 3, 3 );
+
+const planeXYMesh = new THREE.Mesh( planeXY, planeMat );
+planeXYMesh.translateY(1.5)
+planeXYMesh.translateX(1.5)
+ scene.add( planeXYMesh );
+
+ const planeYZ = new THREE.PlaneGeometry( 3, 3 );
+
+const planeYZMesh = new THREE.Mesh( planeYZ, planeMat );
+planeYZMesh.translateX(1.5)
+planeYZMesh.translateZ(1.5)
+planeYZMesh.rotateX(Math.PI/2)
+ scene.add( planeYZMesh );
+
+ const planeXZ = new THREE.PlaneGeometry( 3, 3 );
+
+const planeXZMesh = new THREE.Mesh( planeXZ, planeMat );
+planeXZMesh.translateY(1.5)
+planeXZMesh.translateZ(1.5)
+planeXZMesh.rotateY(Math.PI/2)
+ scene.add( planeXZMesh );
+
+
+
+
 
 const create3DArray = (
   a: number,
@@ -223,10 +253,10 @@ type Vector = {
 };
 
 const displacementFunction = (x: number, y: number, z: number): Vector => {
-  const multiplier = 1;
-  const dx = (y * y) / 4;
-  const dy = -z / 10;
-  const dz = x/1;
+  const multiplier = 0.2;
+  const dx = y/2;
+  const dy = z*z*z/2;
+  const dz = x/2;
   return { x: dx * multiplier, y: dy * multiplier, z: dz * multiplier };
 };
 
@@ -285,11 +315,16 @@ geometry.setAttribute("color", new THREE.BufferAttribute(c2, 3));
 // geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 const material = new THREE.MeshStandardMaterial({
-  vertexColors: true,
-  // color: "white",
-  wireframe: false,
+  // vertexColors: true,
+  color: "blue",
+  // wireframe: false,
   side: THREE.DoubleSide,
 });
+
+const edges = new THREE.EdgesGeometry(geometry);
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000 }); // Black color for the outline
+const line = new THREE.LineSegments(edges, lineMaterial);
+scene.add(line);
 
 const obj = new THREE.Mesh(geometry, material);
 
