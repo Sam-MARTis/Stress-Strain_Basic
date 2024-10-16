@@ -28,10 +28,12 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
 const maxx = 5;
 const maxy = 5;
+const maxz = 5;
 const step = 0.1;
 
-const countX = maxx/step
-const countY = maxx/step
+const countX = Math.floor(maxx/step)
+const countY = Math.floor(maxx/step)
+const countZ = Math.floor(maxx/step)
 const size = 0.1;
 
 const light = new THREE.AmbientLight("#ffffff", 1);
@@ -45,21 +47,60 @@ const colours = new Float32Array([
   0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
 ]);
 
-const xVals: number[][] = [];
-const yVals: number[][] = [];
-const colourVals: number[][][] = [];
+let xVals: number[][][] = [];
+let yVals: number[][][] = [];
+let zVals: number[][][] = []
+const colourVals: number[][][][] = [];
 
-for (let j = 0; j < countX; j++) {
-  xVals.push([]);
-  yVals.push([]);
-  colourVals.push([]);
 
-  for (let i = 0; i < countY; i++) {
-    yVals[j].push(j*step);
-    xVals[j].push(i*step);
-    colourVals[j].push([1, 0, i / countX]);
+
+
+
+const create3DArray = (a: number, b: number, c: number, axis: number): number[][][] => {
+  //Order of acces is y x z
+  const array: number[][][] = []
+  for(let j=0; j<b; j++){
+    array.push([])
+    for(let i=0; i<a; i++){
+      array[j].push([])
+      for(let k = 0; k<c; k++){
+        array[j][i].push(0)
+      }
+    }
   }
-}
+  const isX:number = +(axis==1) //Typescript be freaky. Add + and boolean gets converted to number
+  const isY:number = +(axis==2)
+  const isZ:number = +(axis==3)
+
+    for(let j=0; j<b; j++){
+      for(let k = 0; k<c; k++){
+        for(let i=0; i<a; i++){
+          array[j][i][k] = (i*isX + j*isY + k*isZ)*step
+        }
+      }
+    }
+  
+
+  return array;
+};
+
+xVals = create3DArray(countX, countY, countZ, 1)
+yVals = create3DArray(countX, countY, countZ, 2)
+zVals = create3DArray(countX, countY, countZ, 3)
+
+
+
+// for (let j = 0; j < countX; j++) {
+//   xVals.push([]);
+//   yVals.push([]);
+//   colourVals.push([]);
+
+//   for (let i = 0; i < countY; i++) {
+//     yVals[j].push(j*step);
+//     xVals[j].push(i*step);
+//     colourVals[j].push([1, 0, i / countX]);
+//   }
+// }
 console.log("xvals: ", xVals.length, xVals[0].length);
 console.log("yVals: ", yVals.length, yVals[0].length);
 
