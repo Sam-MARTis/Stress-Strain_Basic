@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const makeRender = (t = 0) => {
+const makeRender = () => {
   // obj.rotation.y = 0.001*t
   // console.log(t);
   
