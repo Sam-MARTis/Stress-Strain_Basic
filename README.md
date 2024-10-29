@@ -1,4 +1,4 @@
-# Displacement visualizer
+# [Displacement visualizer](https://sam-martis.github.io/Stress-Strain_Basic/)
 
 This project is techincally still far from being useful, but it's a proof of concept that Javascript is pretty OP.
 
