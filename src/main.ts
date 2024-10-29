@@ -142,26 +142,28 @@ zVals = create3DArrayCartesian(countX, countY, countZ, 3);
 
 
 /* Polar coordinates for sphere. Uncomment below and comment above for swicthing to sphere */
-xVals = create3DArrayPolar( countTheta, countR, countPhi);
-yVals = create3DArrayPolar( countTheta, countR, countPhi);
-zVals = create3DArrayPolar( countTheta, countR, countPhi);
-console.log("Count: ", countR, countTheta, countPhi);
-console.log("xVals: ", xVals.length, xVals[0].length, xVals[0][0].length);
 
-let rVals =     create3DArrayPolar( countTheta, countR, countPhi);
-let thetaVals = create3DArrayPolar( countTheta, countR, countPhi);
-let phiVals =   create3DArrayPolar( countTheta, countR, countPhi);
-for(let j=0; j<rVals.length; j++){
-  for(let i=0; i<thetaVals[0].length; i++){
-    for(let k=0; k<phiVals[0][0].length; k++){
-      const {x, y, z} = polarToCartesian(j*dr, i*dtheta, k*dphi);
-      xVals[j][i][k] = x;
-      yVals[j][i][k] = y;
-      zVals[j][i][k] = z;
 
-    }
-  }
-}
+// xVals = create3DArrayPolar( countTheta, countR, countPhi);
+// yVals = create3DArrayPolar( countTheta, countR, countPhi);
+// zVals = create3DArrayPolar( countTheta, countR, countPhi);
+// console.log("Count: ", countR, countTheta, countPhi);
+// console.log("xVals: ", xVals.length, xVals[0].length, xVals[0][0].length);
+
+// let rVals =     create3DArrayPolar( countTheta, countR, countPhi);
+// let thetaVals = create3DArrayPolar( countTheta, countR, countPhi);
+// let phiVals =   create3DArrayPolar( countTheta, countR, countPhi);
+// for(let j=0; j<rVals.length; j++){
+//   for(let i=0; i<thetaVals[0].length; i++){
+//     for(let k=0; k<phiVals[0][0].length; k++){
+//       const {x, y, z} = polarToCartesian(j*dr, i*dtheta, k*dphi);
+//       xVals[j][i][k] = x;
+//       yVals[j][i][k] = y;
+//       zVals[j][i][k] = z;
+
+//     }
+//   }
+// }
 
 /* Polar coordinates for sphere end. */
 
