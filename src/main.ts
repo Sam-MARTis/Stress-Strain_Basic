@@ -5,8 +5,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const makeRender = (t = 0) => {
   // obj.rotation.y = 0.001*t
-  console.log(t);
-
+  // console.log(t);
+  
   renderer.render(scene, camera);
   controls.update();
   requestAnimationFrame(makeRender);
@@ -25,41 +25,162 @@ const camera = new THREE.PerspectiveCamera(fov, AR, near, far);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
-const COLOUR_STRENGTH = 0.05;
-const COLOUR_SCALE = 20;
+let COLOUR_STRENGTH = 0.5;
+let COLOUR_SCALE = 20;
+let DISPLACEMENT_MULTIPLIER = 3;
 
 const maxx = 2;
 const maxy = 2;
 const maxz = 2;
 const step = 0.1;
 
-const countX = Math.floor(maxx / step);
-const countY = Math.floor(maxy / step);
-const countZ = Math.floor(maxz / step);
+
+
+
+
+const countX = Math.ceil(maxx / step);
+const countY = Math.ceil(maxy / step);
+const countZ = Math.ceil(maxz / step);
+
+const countR = 5;
+const countTheta = 50;
+const countPhi = 30;
+
+const radius = 3;
+const dr = radius / (countR-1);
+const dtheta = 2 * Math.PI / (countTheta-1);
+const dphi = Math.PI / (countPhi-1);
+
+
 // const size = 0.1;
 
-const light = new THREE.AmbientLight("#ffffff", 1);
-
-const geometry = new THREE.BufferGeometry();
-
-// const vertices = new Float32Array([
-//   -1, -1, 0, 3, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, 1, 0,
-// ]);
-// const colours = new Float32Array([
-//   0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-// ]);
-
 const displacementFunction = (x: number, y: number, z: number): Vector => {
-  const multiplier = 0.2;
+  const multiplier = 0.03*DISPLACEMENT_MULTIPLIER;
   const dx = y*z ;
   const dy = -(z * z * z*x) / 2;
   const dz = -x*y / 2;
   return { x: dx * multiplier, y: dy * multiplier, z: dz * multiplier };
 };
 
+const create3DArrayCartesian = (
+  a: number,
+  b: number,
+  c: number,
+  axis: number
+): number[][][] => {
+  //Order of acces is y x z
+  const array: number[][][] = [];
+  for (let j = 0; j < b; j++) {
+    array.push([]);
+    for (let i = 0; i < a; i++) {
+      array[j].push([]);
+      for (let k = 0; k < c; k++) {
+        array[j][i].push(0);
+      }
+    }
+  }
+  const isX: number = +(axis == 1); //Typescript be freaky. Add + and boolean gets converted to number
+  const isY: number = +(axis == 2);
+  const isZ: number = +(axis == 3);
+  
+  for (let j = 0; j < b; j++) {
+    for (let k = 0; k < c; k++) {
+      for (let i = 0; i < a; i++) {
+        array[j][i][k] = (i * isX + j * isY + k * isZ) * step;
+      }
+    }
+  }
+  
+  return array;
+};
+const polarToCartesian = (r: number, theta: number, phi: number): Vector => {
+  const x = r * Math.sin(phi) * Math.cos(theta);
+  const y = r * Math.sin(phi) * Math.sin(theta);
+  const z = r * Math.cos(phi);
+  return { x, y, z };
+}
+const create3DArrayPolar = (
+  a: number,
+  b: number,
+  c: number,
+): number[][][] => {
+  //Order of acces is y x z
+  const array: number[][][] = [];
+  for (let j = 0; j < b; j++) {
+    array.push([]);
+    for (let i = 0; i < a; i++) {
+      array[j].push([]);
+      for (let k = 0; k < c; k++) {
+        array[j][i].push(0);
+      }
+    }
+  }
+
+  return array;
+};
 let xVals: number[][][] = [];
 let yVals: number[][][] = [];
 let zVals: number[][][] = [];
+
+
+
+
+
+
+
+/* Cartesian coordinates for cube. Comment below and uncomment polar for swicthing to sphere */
+
+xVals = create3DArrayCartesian(countX, countY, countZ, 1);
+yVals = create3DArrayCartesian(countX, countY, countZ, 2);
+zVals = create3DArrayCartesian(countX, countY, countZ, 3);
+
+/* Cartesian coordinates for cube end. */
+
+
+
+
+
+
+/* Polar coordinates for sphere. Uncomment below and comment above for swicthing to sphere */
+xVals = create3DArrayPolar( countTheta, countR, countPhi);
+yVals = create3DArrayPolar( countTheta, countR, countPhi);
+zVals = create3DArrayPolar( countTheta, countR, countPhi);
+console.log("Count: ", countR, countTheta, countPhi);
+console.log("xVals: ", xVals.length, xVals[0].length, xVals[0][0].length);
+
+let rVals =     create3DArrayPolar( countTheta, countR, countPhi);
+let thetaVals = create3DArrayPolar( countTheta, countR, countPhi);
+let phiVals =   create3DArrayPolar( countTheta, countR, countPhi);
+for(let j=0; j<rVals.length; j++){
+  for(let i=0; i<thetaVals[0].length; i++){
+    for(let k=0; k<phiVals[0][0].length; k++){
+      const {x, y, z} = polarToCartesian(j*dr, i*dtheta, k*dphi);
+      xVals[j][i][k] = x;
+      yVals[j][i][k] = y;
+      zVals[j][i][k] = z;
+
+    }
+  }
+}
+
+/* Polar coordinates for sphere end. */
+
+
+
+
+
+
+
+
+
+
+const light = new THREE.AmbientLight("#ffffff", 1);
+
+const geometry = new THREE.BufferGeometry();
+
+
+// let rVals: number[][][][] = [];
+
 let colourVals: number[][][][] = [];
 
 const planeMat = new THREE.MeshStandardMaterial({
@@ -92,37 +213,6 @@ planeXZMesh.translateZ(1.5);
 planeXZMesh.rotateY(Math.PI / 2);
 scene.add(planeXZMesh);
 
-const create3DArray = (
-  a: number,
-  b: number,
-  c: number,
-  axis: number
-): number[][][] => {
-  //Order of acces is y x z
-  const array: number[][][] = [];
-  for (let j = 0; j < b; j++) {
-    array.push([]);
-    for (let i = 0; i < a; i++) {
-      array[j].push([]);
-      for (let k = 0; k < c; k++) {
-        array[j][i].push(0);
-      }
-    }
-  }
-  const isX: number = +(axis == 1); //Typescript be freaky. Add + and boolean gets converted to number
-  const isY: number = +(axis == 2);
-  const isZ: number = +(axis == 3);
-
-  for (let j = 0; j < b; j++) {
-    for (let k = 0; k < c; k++) {
-      for (let i = 0; i < a; i++) {
-        array[j][i][k] = (i * isX + j * isY + k * isZ) * step;
-      }
-    }
-  }
-
-  return array;
-};
 
 const create4DArray = (
   a: number,
@@ -147,41 +237,36 @@ const create4DArray = (
   return array;
 };
 
-xVals = create3DArray(countX, countY, countZ, 1);
-yVals = create3DArray(countX, countY, countZ, 2);
-zVals = create3DArray(countX, countY, countZ, 3);
 
-// for (let j = 0; j < countX; j++) {
-//   xVals.push([]);
-//   yVals.push([]);
-//   colourVals.push([]);
 
-//   for (let i = 0; i < countY; i++) {
-//     yVals[j].push(j*step);
-//     xVals[j].push(i*step);
-//     colourVals[j].push([1, 0, i / countX]);
-//   }
-// }
-console.log("xvals: ", xVals.length, xVals[0].length);
-console.log("yVals: ", yVals.length, yVals[0].length);
 
-// const createVertices = (xArr: number[][][], yArr: number[][][] ) => {
-//   const vertices = [];
-//   for (let j = 0; j < yArr.length - 1; j++) {
-//     for (let i = 0; i < xArr[0].length - 1; i++) {
-//       vertices.push(xArr[j][i][0], yArr[j][i][0], 0);
-//       vertices.push(xArr[j][i + 1][0], yArr[j][i + 1][0], 0);
-//       vertices.push(xArr[j + 1][i][0], yArr[j + 1][i][0], 0); //Triangle 1
 
-//       vertices.push(xArr[j + 1][i + 1][0], yArr[j + 1][i + 1][0], 0);
-//       vertices.push(xArr[j + 1][i][0], yArr[j + 1][i][0], 0);
-//       vertices.push(xArr[j][i + 1][0], yArr[j][i + 1][0], 0); // T2
-//       // Just 10 more to go ...*dies*
 
-//     }
-//   }
-//   return new Float32Array(vertices);
-// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const createVertices = (
   xArr: number[][][],
@@ -193,7 +278,7 @@ const createVertices = (
   for (let j = 0; j < yArr.length - 1; j++) {
     for (let i = 0; i < xArr[0].length - 1; i++) {
       for (let k = 0; k < zArr[0][0].length - 1; k++) {
-        // Coordinates of the cube corners
+        // Coordinates of the hexahedron corners
 
         // cyxz
         const c000 = [xArr[j][i][k], yArr[j][i][k], zArr[j][i][k]];
@@ -257,7 +342,7 @@ const createColourVertices = (colourValues: number[][][][]) => {
   for (let j = 0; j < colourValues.length-1; j++) {
     for (let i = 0; i < colourValues[0].length-1; i++) {
       for (let k = 0; k < colourValues[0][0].length-1; k++) {
-        //Six faces and each face has two Triangles. Each triangle has three points which each need three frickin colours
+        //Six faces and each face has two Triangles. Each triangle has three points which each need three frickin colours each
         const coloursToPush = [
           colourValues[j+0][i+0][k+0][0], colourValues[j+0][i+0][k+0][1], colourValues[j+0][i+0][k+0][2],
           colourValues[j+1][i+0][k+0][0], colourValues[j+1][i+0][k+0][1], colourValues[j+1][i+0][k+0][2],
@@ -361,8 +446,8 @@ const findColourMapping = (
   zNew: number[][][]
 ): number[][][][] => {
   const colours = create4DArray(
-    xOld.length,
-    yOld[0].length,
+    xOld[0].length,
+    yOld.length,
     zOld[0][0].length,
     3
   );
@@ -390,6 +475,7 @@ const findColourMapping = (
 };
 
 const newPos = displaceStuff(xVals, yVals, zVals);
+// const newPos = displaceStuff(rVals, thetaVals, phiVals);
 const xNew = newPos.xVals;
 const yNew = newPos.yVals;
 const zNew = newPos.zVals;
@@ -398,7 +484,7 @@ colourVals = findColourMapping(xVals, yVals, zVals, xNew, yNew, zNew);
 
 const v2 = createVertices(xNew, yNew, zNew);
 // const v2 = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0])
-console.log(v2);
+// console.log(v2);
 const c2 = createColourVertices(colourVals);
 
 geometry.setAttribute("position", new THREE.BufferAttribute(v2, 3));
